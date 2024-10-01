@@ -46,10 +46,6 @@ export interface ProviderInterface extends ProviderEventEmitter {
     listener: (_: ProviderEventMap[K]) => void
   ): this;
 }
-// export interface ProviderInterface extends ProviderEventEmitter {
-//   request(args: RequestArguments): Promise<unknown>;
-//   on(event: string, listener: (...args: unknown[]) => void): void;
-// }
 
 export type ProviderEventCallback = ProviderInterface["emit"];
 
@@ -73,7 +69,7 @@ export class HoTProvider
   }
 
   public async request(args: RequestArguments): Promise<unknown> {
-    console.log("request", args);
+    console.log("[HoT Provider] request", args);
     if (
       this.accounts.length === 0 &&
       args.method !== WalletRpcMethod.eth_requestAccounts
@@ -83,47 +79,26 @@ export class HoTProvider
 
     switch (args.method) {
       case WalletRpcMethod.eth_requestAccounts:
-        return this.getAccounts(args);
       case WalletRpcMethod.eth_sendTransaction:
       case WalletRpcMethod.eth_signTypedData:
       case WalletRpcMethod.personal_sign:
         return this.sendRequestToPopup(args);
+      default:
+        return this.wrapError(new Error("Method not found"));
     }
   }
 
-  // public on(event: string, listener: (...args: unknown[]) => void): void {
-  //   this.communicator
-  //     .onMessage<Message>((message) => message.event === event)
-  //     .then((message) => {
-  //       listener(
-  //         ...(Array.isArray(message.params) ? message.params : [message.params])
-  //       );
-  //       // Re-register the listener for future events
-  //       this.on(event, listener);
-  //     })
-  //     .catch((error) => {
-  //       console.error(`Error in event listener for ${event}:`, error);
-  //     });
-  // }
   private async sendRequestToPopup(request: RequestArguments) {
-    const popupLoaded = await this.communicator.waitForPopupLoaded();
-    console.log("[HoT Provider] popupLoaded", popupLoaded);
+    await this.communicator.waitForPopupLoaded();
+    console.log("[HoT Provider] sendRequestToPopup", request);
 
-    return this.communicator.postRequestAndWaitForResponse({
-      id: crypto.randomUUID(),
-      method: request.method,
-      params: request.params,
-    });
-  }
-
-  private async getAccounts(args: RequestArguments) {
-    console.log("[HoT Provider] getAccounts request", args);
     const response: Message =
       await this.communicator.postRequestAndWaitForResponse({
         id: crypto.randomUUID(),
-        method: args.method,
-        params: args.params,
+        method: request.method,
+        params: request.params,
       });
+
     console.log("[HoT Provider] getAccounts response", response);
     return response;
   }

@@ -72,18 +72,14 @@ export class Communicator {
     }
 
     this.popup = openPopup(this.url);
-    // this.onMessage<ConfigMessage>(({ event }) => event === "PopupUnload")
-    //   .then(this.disconnect)
-    //   .catch(() => {});
+
     this.onMessage<ConfigMessage>(({ event }) => event === "PopupUnload")
-      .then(() => console.log("close window"))
+      .then(() => this.disconnect())
       .catch(() => {});
 
     return this.onMessage<ConfigMessage>(({ event }) => event === "PopupLoaded")
-      .then((message) => {
-        this.postMessage({
-          requestId: message.id,
-        });
+      .then(() => {
+        console.log("the window has been loaded!");
       })
       .then(() => {
         if (!this.popup) throw new Error("Internal error: Popup is null");

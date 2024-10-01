@@ -18,7 +18,6 @@ export function openPopup(url: URL): Window {
     throw new Error("WebApp window failed to open");
   }
 
-  console.log("returned popup", popup);
   return popup;
 }
 
