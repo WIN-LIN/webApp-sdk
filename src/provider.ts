@@ -137,6 +137,11 @@ export class HoTProvider
       };
     }
     const response = await this.sendRequestToPopup(request);
+    if (response.error) {
+      return {
+        error: this.wrapError(response.error),
+      };
+    }
     const accounts = response.result as string[];
     this.accounts = accounts;
     setLocalStorage(getKey("accounts"), this.accounts);
