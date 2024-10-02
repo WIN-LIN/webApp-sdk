@@ -1,24 +1,26 @@
-import { Communicator, Message } from "./communication";
+import {
+  Communicator,
+  JsonRpcResponse,
+  ProviderRpcError,
+} from "./communication";
 import { EventEmitter } from "eventemitter3";
+import { getKey, getLocalStorage, setLocalStorage } from "./storage";
 
 export enum WalletRpcMethod {
   eth_chainId = "eth_chainId",
+  eth_accounts = "eth_accounts",
   eth_requestAccounts = "eth_requestAccounts",
   eth_sendTransaction = "eth_sendTransaction",
   eth_signTypedData = "eth_signTypedData",
   personal_sign = "personal_sign",
 }
 
+/* EIP-1193  https://eips.ethereum.org/EIPS/eip-1193 */
 export interface RequestArguments {
   method: string;
   params?: unknown[] | object;
 }
 
-export interface ProviderRpcError extends Error {
-  code: number;
-  data?: unknown;
-}
-/* EIP-1193  https://eips.ethereum.org/EIPS/eip-1193 */
 interface ProviderConnectInfo {
   readonly chainId: string;
 }
@@ -36,7 +38,6 @@ export class ProviderEventEmitter extends EventEmitter<
 
 export interface ProviderInterface extends ProviderEventEmitter {
   request(args: RequestArguments): Promise<unknown>;
-  // disconnect(): Promise<void>;
   emit<K extends keyof ProviderEventMap>(
     event: K,
     ...args: [ProviderEventMap[K]]
@@ -49,12 +50,6 @@ export interface ProviderInterface extends ProviderEventEmitter {
 
 export type ProviderEventCallback = ProviderInterface["emit"];
 
-/* Hot Wallet Provider */
-// type Chain = {
-//   id: number;
-//   rpcUrl: string;
-// };
-
 export class HoTProvider
   extends ProviderEventEmitter
   implements ProviderInterface
@@ -66,9 +61,10 @@ export class HoTProvider
   constructor(options: { url: string }) {
     super();
     this.communicator = new Communicator(options.url);
+    this.accounts = getLocalStorage(getKey("accounts")) ?? [];
   }
 
-  public async request(args: RequestArguments): Promise<unknown> {
+  public async request(args: RequestArguments): Promise<JsonRpcResponse> {
     console.log("[HoT Provider] request", args);
     if (
       this.accounts.length === 0 &&
@@ -78,28 +74,73 @@ export class HoTProvider
     }
 
     switch (args.method) {
+      case WalletRpcMethod.eth_accounts:
+        return this.getAccounts();
       case WalletRpcMethod.eth_requestAccounts:
+        return this.handleRequestAccounts(args);
       case WalletRpcMethod.eth_sendTransaction:
+        console.log("eth_sendTransaction");
+        return this.sendRequestToPopup(args);
       case WalletRpcMethod.eth_signTypedData:
       case WalletRpcMethod.personal_sign:
         return this.sendRequestToPopup(args);
       default:
-        return this.wrapError(new Error("Method not found"));
+        const rpcError = this.wrapError(new Error("Method not found"));
+        return {
+          error: rpcError,
+        };
     }
   }
 
-  private async sendRequestToPopup(request: RequestArguments) {
+  private async sendRequestToPopup(
+    request: RequestArguments
+  ): Promise<JsonRpcResponse> {
     await this.communicator.waitForPopupLoaded();
     console.log("[HoT Provider] sendRequestToPopup", request);
 
-    const response: Message =
-      await this.communicator.postRequestAndWaitForResponse({
-        id: crypto.randomUUID(),
-        method: request.method,
-        params: request.params,
-      });
+    const response = await this.communicator.postRequestAndWaitForResponse({
+      id: crypto.randomUUID(),
+      method: request.method,
+      params: request.params,
+    });
 
-    console.log("[HoT Provider] getAccounts response", response);
+    console.log(
+      "[HoT Provider] response from request",
+      request.method,
+      response
+    );
+
+    if (response.error) {
+      return {
+        error: this.wrapError(response.error),
+      };
+    }
+
+    return {
+      result: response.result,
+    };
+  }
+
+  private getAccounts(): JsonRpcResponse {
+    console.log("[HoT Provider] getAccounts", this.accounts);
+    return {
+      result: this.accounts,
+    };
+  }
+
+  private async handleRequestAccounts(
+    request: RequestArguments
+  ): Promise<JsonRpcResponse> {
+    if (this.accounts.length > 0) {
+      return {
+        result: this.accounts,
+      };
+    }
+    const response = await this.sendRequestToPopup(request);
+    const accounts = response.result as string[];
+    this.accounts = accounts;
+    setLocalStorage(getKey("accounts"), this.accounts);
+
     return response;
   }
 

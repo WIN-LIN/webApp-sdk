@@ -1,13 +1,22 @@
 import { closePopup, openPopup } from "./popup";
 import { UUID } from "crypto";
 
-export interface Message {
-  id?: UUID;
-  requestId?: UUID;
+export interface ProviderRpcError extends Error {
+  code: number;
+  data?: unknown;
+}
+export interface JsonRpcResponse {
+  id?: UUID | number;
+  result?: unknown; // REQUIRED on success
+  error?: ProviderRpcError; // REQUIRED on error
+}
+
+export interface Message extends JsonRpcResponse {
+  id: UUID;
   method?: string;
   params?: unknown[] | object;
-  data?: unknown;
   event?: string;
+  result?: unknown;
 }
 
 export interface ConfigMessage extends Message {
@@ -33,12 +42,10 @@ export class Communicator {
   }
 
   public async postRequestAndWaitForResponse<M extends Message>(
-    request: Message & { id: UUID }
+    request: Message
   ): Promise<M> {
     console.log("postRequestAndWaitForResponse", request);
-    const responsePromise = this.onMessage<M>(
-      ({ requestId }) => requestId === request.id
-    );
+    const responsePromise = this.onMessage<M>(({ id }) => id === request.id);
     await this.postMessage(request);
     return await responsePromise;
   }
@@ -46,7 +53,6 @@ export class Communicator {
   public async onMessage<M extends Message>(
     predicate: (_: Partial<M>) => boolean
   ): Promise<M> {
-    console.log("onMessage", predicate);
     return new Promise((resolve, reject) => {
       const listener = (event: MessageEvent<M>) => {
         if (event.origin !== this.url.origin) return;
@@ -64,13 +70,14 @@ export class Communicator {
   }
 
   public async waitForPopupLoaded() {
-    console.log("waitForPopupLoaded...");
     if (this.popup && !this.popup.closed) {
       // In case the user un-focused the popup between requests, focus it again
+      console.log("popup already loaded, but not focused");
       this.popup.focus();
       return this.popup;
     }
 
+    console.log("waitForPopupLoaded...");
     this.popup = openPopup(this.url);
 
     this.onMessage<ConfigMessage>(({ event }) => event === "PopupUnload")
@@ -85,13 +92,6 @@ export class Communicator {
         if (!this.popup) throw new Error("Internal error: Popup is null");
         return this.popup;
       });
-  }
-
-  public removeListener(listener: (_: MessageEvent) => void): void {
-    if (this.listeners.has(listener)) {
-      window.removeEventListener("message", listener);
-      this.listeners.delete(listener);
-    }
   }
 
   private disconnect = () => {

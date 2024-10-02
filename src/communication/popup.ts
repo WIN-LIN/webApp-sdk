@@ -1,10 +1,8 @@
 const POPUP_WIDTH = 420;
 const POPUP_HEIGHT = 540;
 
-// Window Management
-
 export function openPopup(url: URL): Window {
-  console.log("openPopup", url);
+  console.log("openPopup");
   const left = (window.innerWidth - POPUP_WIDTH) / 2 + window.screenX;
   const top = (window.innerHeight - POPUP_HEIGHT) / 2 + window.screenY;
 
