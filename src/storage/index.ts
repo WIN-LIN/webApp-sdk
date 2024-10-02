@@ -1,22 +1,22 @@
 export const prefix = "HoT";
-
-export const getKey = (key: string) => {
+export type Key = "accounts";
+export const getKey = (key: Key) => {
   return `${prefix}:${key}`;
 };
 
 export const getLocalStorage = (key: string) => {
-  const value = localStorage.getItem(`${prefix}:${key}`);
+  const value = localStorage.getItem(key);
   return value ? JSON.parse(value) : null;
 };
 export const setLocalStorage = (key: string, value: string | object) => {
   return localStorage.setItem(
-    `${prefix}:${key}`,
+    key,
     typeof value === "object" ? JSON.stringify(value) : value
   );
 };
 
 export const removeLocalStorage = (key: string) => {
-  return localStorage.removeItem(`${prefix}:${key}`);
+  return localStorage.removeItem(key);
 };
 export const clearLocalStorage = () => {
   for (let i = 0; i < localStorage.length; i++) {
