@@ -79,8 +79,6 @@ export class HoTProvider
       case WalletRpcMethod.eth_requestAccounts:
         return this.handleRequestAccounts(args);
       case WalletRpcMethod.eth_sendTransaction:
-        console.log("eth_sendTransaction");
-        return this.sendRequestToPopup(args);
       case WalletRpcMethod.eth_signTypedData_v4:
         return this.sendRequestToPopup(args);
       default:
