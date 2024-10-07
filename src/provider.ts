@@ -11,7 +11,7 @@ export enum WalletRpcMethod {
   eth_accounts = "eth_accounts",
   eth_requestAccounts = "eth_requestAccounts",
   eth_sendTransaction = "eth_sendTransaction",
-  eth_signTypedData = "eth_signTypedData",
+  eth_signTypedData_v4 = "eth_signTypedData_v4",
   personal_sign = "personal_sign",
 }
 
@@ -81,8 +81,8 @@ export class HoTProvider
       case WalletRpcMethod.eth_sendTransaction:
         console.log("eth_sendTransaction");
         return this.sendRequestToPopup(args);
-      case WalletRpcMethod.eth_signTypedData:
       case WalletRpcMethod.personal_sign:
+      case WalletRpcMethod.eth_signTypedData_v4:
         return this.sendRequestToPopup(args);
       default:
         const rpcError = this.wrapError(new Error("Method not found"));
