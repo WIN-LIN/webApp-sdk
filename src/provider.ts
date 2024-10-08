@@ -5,6 +5,7 @@ import {
 } from "./communication";
 import { EventEmitter } from "eventemitter3";
 import { getKey, getLocalStorage, setLocalStorage } from "./storage";
+import { rpc } from "./utils";
 
 export enum WalletRpcMethod {
   eth_chainId = "eth_chainId",
@@ -64,7 +65,7 @@ export class HoTProvider
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
   }
 
-  public async request(args: RequestArguments): Promise<JsonRpcResponse> {
+  public async request(args: RequestArguments): Promise<unknown> {
     console.log("[HoT Provider] request", args);
     if (
       this.accounts.length === 0 &&
@@ -73,25 +74,29 @@ export class HoTProvider
       throw new Error("Should request accounts before sending request");
     }
 
-    switch (args.method) {
-      case WalletRpcMethod.eth_accounts:
-        return this.getAccounts();
-      case WalletRpcMethod.eth_requestAccounts:
-        return this.handleRequestAccounts(args);
-      case WalletRpcMethod.eth_sendTransaction:
-      case WalletRpcMethod.eth_signTypedData_v4:
-        return this.sendRequestToPopup(args);
-      default:
-        const rpcError = this.wrapError(new Error("Method not found"));
-        return {
-          error: rpcError,
-        };
+    try {
+      switch (args.method) {
+        case WalletRpcMethod.eth_accounts:
+          return this.getAccounts();
+        case WalletRpcMethod.eth_requestAccounts:
+          return this.handleRequestAccounts(args);
+        case WalletRpcMethod.eth_sendTransaction:
+        case WalletRpcMethod.eth_signTypedData_v4:
+          return this.sendRequestToPopup(args);
+        case WalletRpcMethod.eth_chainId:
+          return this.getChainId();
+        default:
+          const { result } = await rpc("https://rpc.sepolia.org", args);
+          return result;
+      }
+    } catch (error) {
+      throw this.wrapError(error);
     }
   }
 
   private async sendRequestToPopup(
     request: RequestArguments
-  ): Promise<JsonRpcResponse> {
+  ): Promise<unknown> {
     await this.communicator.waitForPopupLoaded();
     console.log("[HoT Provider] sendRequestToPopup", request);
 
@@ -108,42 +113,33 @@ export class HoTProvider
     );
 
     if (response.error) {
-      return {
-        error: this.wrapError(response.error),
-      };
+      throw this.wrapError(response.error);
     }
 
-    return {
-      result: response.result,
-    };
+    return response.result;
   }
 
-  private getAccounts(): JsonRpcResponse {
+  private getAccounts() {
     console.log("[HoT Provider] getAccounts", this.accounts);
-    return {
-      result: this.accounts,
-    };
+    return this.accounts;
+  }
+
+  private getChainId() {
+    return 11155111;
   }
 
   private async handleRequestAccounts(
     request: RequestArguments
-  ): Promise<JsonRpcResponse> {
+  ): Promise<unknown> {
     if (this.accounts.length > 0) {
-      return {
-        result: this.accounts,
-      };
+      return this.accounts;
     }
-    const response = await this.sendRequestToPopup(request);
-    if (response.error) {
-      return {
-        error: this.wrapError(response.error),
-      };
-    }
-    const accounts = response.result as string[];
+    const result = await this.sendRequestToPopup(request);
+    const accounts = result as string[];
     this.accounts = accounts;
     setLocalStorage(getKey("accounts"), this.accounts);
 
-    return response;
+    return accounts;
   }
 
   private wrapError(error: unknown): ProviderRpcError {

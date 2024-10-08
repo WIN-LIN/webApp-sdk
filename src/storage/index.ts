@@ -5,8 +5,11 @@ export const getKey = (key: Key) => {
 };
 
 export const getLocalStorage = (key: string) => {
-  const value = localStorage.getItem(key);
-  return value ? JSON.parse(value) : null;
+  if (typeof localStorage !== 'undefined') {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
+  }
+  return null;
 };
 export const setLocalStorage = (key: string, value: string | object) => {
   return localStorage.setItem(
