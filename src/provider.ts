@@ -12,7 +12,7 @@ export enum WalletRpcMethod {
   eth_accounts = "eth_accounts",
   eth_requestAccounts = "eth_requestAccounts",
   eth_sendTransaction = "eth_sendTransaction",
-  eth_signTypedData = "eth_signTypedData",
+  eth_signTypedData_v4 = "eth_signTypedData_v4",
   personal_sign = "personal_sign",
 }
 
@@ -81,18 +81,16 @@ export class HoTProvider
         case WalletRpcMethod.eth_requestAccounts:
           return this.handleRequestAccounts(args);
         case WalletRpcMethod.eth_sendTransaction:
-          return this.sendRequestToPopup(args);
-        case WalletRpcMethod.eth_signTypedData:
-        case WalletRpcMethod.personal_sign:
+        case WalletRpcMethod.eth_signTypedData_v4:
           return this.sendRequestToPopup(args);
         case WalletRpcMethod.eth_chainId:
           return this.getChainId();
         default:
-          const { result } = await rpc('https://rpc.sepolia.org', args)
-          return result
+          const { result } = await rpc("https://rpc.sepolia.org", args);
+          return result;
       }
     } catch (error) {
-      throw this.wrapError(error)
+      throw this.wrapError(error);
     }
   }
 
@@ -115,26 +113,26 @@ export class HoTProvider
     );
 
     if (response.error) {
-      throw this.wrapError(response.error)
+      throw this.wrapError(response.error);
     }
 
-    return response.result
+    return response.result;
   }
 
   private getAccounts() {
     console.log("[HoT Provider] getAccounts", this.accounts);
-    return this.accounts
+    return this.accounts;
   }
 
   private getChainId() {
-    return 11155111
+    return 11155111;
   }
 
   private async handleRequestAccounts(
     request: RequestArguments
   ): Promise<unknown> {
     if (this.accounts.length > 0) {
-      return this.accounts
+      return this.accounts;
     }
     const result = await this.sendRequestToPopup(request);
     const accounts = result as string[];
