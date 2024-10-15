@@ -1,8 +1,4 @@
-import {
-  Communicator,
-  JsonRpcResponse,
-  ProviderRpcError,
-} from "./communication";
+import { Communicator, ProviderRpcError } from "./communication";
 import { EventEmitter } from "eventemitter3";
 import { getKey, getLocalStorage, setLocalStorage } from "./storage";
 import { rpc } from "./utils";
@@ -13,6 +9,7 @@ export enum WalletRpcMethod {
   eth_requestAccounts = "eth_requestAccounts",
   eth_sendTransaction = "eth_sendTransaction",
   eth_signTypedData_v4 = "eth_signTypedData_v4",
+  wallet_switchEthereumChain = "wallet_switchEthereumChain",
   personal_sign = "personal_sign",
 }
 
@@ -51,18 +48,26 @@ export interface ProviderInterface extends ProviderEventEmitter {
 
 export type ProviderEventCallback = ProviderInterface["emit"];
 
+type Chain = {
+  id: number;
+  rpcUrl: string;
+};
 export class HoTProvider
   extends ProviderEventEmitter
   implements ProviderInterface
 {
   private readonly communicator: Communicator;
   private accounts: string[] = [];
-  // private chain: Chain;
+  private chain: Chain;
 
   constructor(options: { url: string }) {
     super();
     this.communicator = new Communicator(options.url);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
+    this.chain = getLocalStorage(getKey("activeChainId")) ?? {
+      id: 11155111,
+      rpcUrl: "https://rpc.sepolia.org",
+    };
   }
 
   public async request(args: RequestArguments): Promise<unknown> {
@@ -80,13 +85,15 @@ export class HoTProvider
           return this.getAccounts();
         case WalletRpcMethod.eth_requestAccounts:
           return this.handleRequestAccounts(args);
+        case WalletRpcMethod.wallet_switchEthereumChain:
+          return this.handleSwitchChain(args);
         case WalletRpcMethod.eth_sendTransaction:
         case WalletRpcMethod.eth_signTypedData_v4:
           return this.sendRequestToPopup(args);
         case WalletRpcMethod.eth_chainId:
           return this.getChainId();
         default:
-          const { result } = await rpc("https://rpc.sepolia.org", args);
+          const { result } = await rpc(this.chain.rpcUrl, args);
           return result;
       }
     } catch (error) {
@@ -99,7 +106,7 @@ export class HoTProvider
   ): Promise<unknown> {
     await this.communicator.waitForPopupLoaded();
     console.log("[HoT Provider] sendRequestToPopup", request);
-
+    // TODO: add chainId to request
     const response = await this.communicator.postRequestAndWaitForResponse({
       id: crypto.randomUUID(),
       method: request.method,
@@ -125,7 +132,7 @@ export class HoTProvider
   }
 
   private getChainId() {
-    return 11155111;
+    return this.chain.id;
   }
 
   private async handleRequestAccounts(
@@ -134,12 +141,46 @@ export class HoTProvider
     if (this.accounts.length > 0) {
       return this.accounts;
     }
-    const result = await this.sendRequestToPopup(request);
-    const accounts = result as string[];
+    const result = (await this.sendRequestToPopup(request)) as {
+      accounts: string[];
+      availableChainList: Chain[];
+    };
+    const accounts = result.accounts;
     this.accounts = accounts;
     setLocalStorage(getKey("accounts"), this.accounts);
-
+    setLocalStorage(getKey("availableChainList"), result.availableChainList);
+    console.log("[HoT Provider] handleRequestAccounts", accounts);
+    this.updateChain(result.availableChainList[0].id);
     return accounts;
+  }
+
+  private async handleSwitchChain(request: RequestArguments) {
+    if (
+      !Array.isArray(request.params) ||
+      request.params.length === 0 ||
+      !("chainId" in request.params[0])
+    ) {
+      return {
+        code: -32602,
+        message: "Invalid request params",
+      };
+    }
+
+    // check if the chain is available in the list
+    const { chainId: chainIdHex } = request?.params?.[0] as {
+      chainId: string;
+    };
+    const chainId = parseInt(chainIdHex, 16);
+
+    const isChainAvailable = this.updateChain(chainId);
+    if (isChainAvailable) {
+      return null; // success
+    }
+
+    return {
+      code: 4902,
+      message: "Unrecognized or unsupported chain ID.",
+    };
   }
 
   private wrapError(error: unknown): ProviderRpcError {
@@ -156,5 +197,18 @@ export class HoTProvider
       code: -32603, // Internal error
       data: error,
     };
+  }
+  private updateChain(chainId: number) {
+    const availableChainList = getLocalStorage(getKey("availableChainList"));
+    console.log("availableChainList"), availableChainList;
+    const chain = availableChainList.find(
+      (chain: Chain) => chain.id === chainId
+    );
+    if (!chain) {
+      return false;
+    }
+    this.chain = chain;
+    setLocalStorage(getKey("activeChainId"), chain);
+    return true;
   }
 }

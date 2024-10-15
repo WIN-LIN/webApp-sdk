@@ -1,11 +1,11 @@
 export const prefix = "HoT";
-export type Key = "accounts";
+export type Key = "accounts" | "activeChainId" | "availableChainList";
 export const getKey = (key: Key) => {
   return `${prefix}:${key}`;
 };
 
 export const getLocalStorage = (key: string) => {
-  if (typeof localStorage !== 'undefined') {
+  if (typeof localStorage !== "undefined") {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : null;
   }
