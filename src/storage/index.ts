@@ -1,5 +1,5 @@
 export const prefix = "HoT";
-export type Key = "accounts" | "activeChainId" | "availableChainList";
+export type Key = "accounts" | "activeChainId" | "availableChainList" | "url";
 export const getKey = (key: Key) => {
   return `${prefix}:${key}`;
 };

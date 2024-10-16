@@ -68,6 +68,13 @@ export class HoTProvider
 
   constructor(options: { url?: string } = { url: HoTUrl[0] }) {
     super();
+    // check if url is from HoT
+    if (options.url && HoTUrl.includes(options.url)) {
+      sessionStorage.setItem(getKey("url"), options.url);
+    } else {
+      options.url = sessionStorage.getItem(getKey("url")) ?? HoTUrl[0];
+    }
+
     this.communicator = new Communicator(`${options.url}/wallet`);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
     this.chain = getLocalStorage(getKey("activeChainId")) ?? {
