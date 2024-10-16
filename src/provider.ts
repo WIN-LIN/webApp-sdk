@@ -60,7 +60,9 @@ export class HoTProvider
   private accounts: string[] = [];
   private chain: Chain;
 
-  constructor(options: { url: string }) {
+  constructor(
+    options: { url: string } = { url: "https://home-of-token-web.vercel.app" }
+  ) {
     super();
     this.communicator = new Communicator(options.url);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
