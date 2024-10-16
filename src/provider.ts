@@ -52,6 +52,12 @@ type Chain = {
   id: number;
   rpcUrl: string;
 };
+
+export const HoTUrl = [
+  "https://home-of-token-web.vercel.app/", // main
+  "https://home-of-token-web-test.vercel.app/", // test
+  "http://localhost:3000/", // local
+];
 export class HoTProvider
   extends ProviderEventEmitter
   implements ProviderInterface
@@ -60,11 +66,9 @@ export class HoTProvider
   private accounts: string[] = [];
   private chain: Chain;
 
-  constructor(
-    options: { url: string } = { url: "https://home-of-token-web.vercel.app" }
-  ) {
+  constructor(options: { url?: string } = { url: HoTUrl[0] }) {
     super();
-    this.communicator = new Communicator(options.url);
+    this.communicator = new Communicator(`${options.url}/wallet`);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
     this.chain = getLocalStorage(getKey("activeChainId")) ?? {
       id: 11155111,
