@@ -13,6 +13,7 @@ export interface JsonRpcResponse {
 
 export interface Message extends JsonRpcResponse {
   id: UUID;
+  chainId: number;
   method?: string;
   params?: unknown[] | object;
   event?: string;

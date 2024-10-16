@@ -106,9 +106,9 @@ export class HoTProvider
   ): Promise<unknown> {
     await this.communicator.waitForPopupLoaded();
     console.log("[HoT Provider] sendRequestToPopup", request);
-    // TODO: add chainId to request
     const response = await this.communicator.postRequestAndWaitForResponse({
       id: crypto.randomUUID(),
+      chainId: this.chain.id,
       method: request.method,
       params: request.params,
     });
