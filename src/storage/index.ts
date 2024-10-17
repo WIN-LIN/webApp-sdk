@@ -7,7 +7,11 @@ export const getKey = (key: Key) => {
 export const getLocalStorage = (key: string) => {
   if (typeof localStorage !== "undefined") {
     const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : null;
+    try {
+      return JSON.parse(value!);
+    } catch {
+      return value;
+    }
   }
   return null;
 };
@@ -28,4 +32,26 @@ export const clearLocalStorage = () => {
       localStorage.removeItem(key);
     }
   }
+};
+
+export const getSessionStorage = (key: string) => {
+  if (typeof sessionStorage !== "undefined") {
+    const value = sessionStorage.getItem(key);
+    try {
+      return JSON.parse(value!);
+    } catch {
+      return value;
+    }
+  }
+  return null;
+};
+
+export const setSessionStorage = (key: string, value: string | object) => {
+  if (typeof sessionStorage !== "undefined") {
+    return sessionStorage.setItem(
+      key,
+      typeof value === "object" ? JSON.stringify(value) : value
+    );
+  }
+  return;
 };

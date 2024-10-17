@@ -1,6 +1,12 @@
 import { Communicator, ProviderRpcError } from "./communication";
 import { EventEmitter } from "eventemitter3";
-import { getKey, getLocalStorage, setLocalStorage } from "./storage";
+import {
+  getKey,
+  getLocalStorage,
+  getSessionStorage,
+  setLocalStorage,
+  setSessionStorage,
+} from "./storage";
 import { rpc } from "./utils";
 
 export enum WalletRpcMethod {
@@ -70,9 +76,9 @@ export class HoTProvider
     super();
     // check if url is from HoT
     if (options.url && HoTUrl.includes(options.url)) {
-      sessionStorage.setItem(getKey("url"), options.url);
+      setSessionStorage(getKey("url"), options.url);
     } else {
-      options.url = sessionStorage.getItem(getKey("url")) ?? HoTUrl[0];
+      options.url = getSessionStorage(getKey("url")) ?? HoTUrl[0];
     }
 
     this.communicator = new Communicator(`${options.url}/wallet`);
