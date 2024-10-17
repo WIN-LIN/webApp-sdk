@@ -1,6 +1,12 @@
 import { Communicator, ProviderRpcError } from "./communication";
 import { EventEmitter } from "eventemitter3";
-import { getKey, getLocalStorage, setLocalStorage } from "./storage";
+import {
+  getKey,
+  getLocalStorage,
+  getSessionStorage,
+  setLocalStorage,
+  setSessionStorage,
+} from "./storage";
 import { rpc } from "./utils";
 
 export enum WalletRpcMethod {
@@ -52,6 +58,12 @@ type Chain = {
   id: number;
   rpcUrl: string;
 };
+
+export const HoTUrl = [
+  "https://home-of-token-web.vercel.app/", // main
+  "https://home-of-token-web-test.vercel.app/", // test
+  "http://localhost:3000/", // local
+];
 export class HoTProvider
   extends ProviderEventEmitter
   implements ProviderInterface
@@ -60,9 +72,16 @@ export class HoTProvider
   private accounts: string[] = [];
   private chain: Chain;
 
-  constructor(options: { url: string }) {
+  constructor(options: { url?: string } = { url: HoTUrl[0] }) {
     super();
-    this.communicator = new Communicator(options.url);
+    // check if url is from HoT
+    if (options.url && HoTUrl.includes(options.url)) {
+      setSessionStorage(getKey("url"), options.url);
+    } else {
+      options.url = getSessionStorage(getKey("url")) ?? HoTUrl[0];
+    }
+
+    this.communicator = new Communicator(`${options.url}/wallet`);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
     this.chain = getLocalStorage(getKey("activeChainId")) ?? {
       id: 11155111,
