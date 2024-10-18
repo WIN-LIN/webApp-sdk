@@ -78,7 +78,7 @@ export class HoTProvider
     if (options.url && HoTUrl.includes(options.url)) {
       setSessionStorage(getKey("url"), options.url);
     } else {
-      options.url = getSessionStorage(getKey("url")) ?? HoTUrl[0];
+      options.url = getSessionStorage(getKey("url")) ?? options.url;
     }
 
     this.communicator = new Communicator(`${options.url}/wallet`);
