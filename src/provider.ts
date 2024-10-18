@@ -72,7 +72,7 @@ export class HoTProvider
   private accounts: string[] = [];
   private chain: Chain;
 
-  constructor(options: { url?: string } = { url: HoTUrl[0] }) {
+  constructor(options: { url?: string } = { url: HoTUrl[1] }) {
     super();
     // check if url is from HoT
     if (options.url && HoTUrl.includes(options.url)) {
