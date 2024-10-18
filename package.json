@@ -13,5 +13,5 @@
   "devDependencies": {
     "@types/node": "^22.7.3"
   },
-  "version": "0.0.19"
+  "version": "0.0.20"
 }

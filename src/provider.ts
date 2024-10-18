@@ -72,13 +72,14 @@ export class HoTProvider
   private accounts: string[] = [];
   private chain: Chain;
 
-  constructor(options: { url?: string } = { url: HoTUrl[1] }) {
+  constructor(options: { url?: string }) {
     super();
+    const defaultUrl = HoTUrl[1];
     // check if url is from HoT
     if (options.url && HoTUrl.includes(options.url)) {
       setSessionStorage(getKey("url"), options.url);
     } else {
-      options.url = getSessionStorage(getKey("url")) ?? options.url;
+      options.url = getSessionStorage(getKey("url")) ?? defaultUrl;
     }
 
     this.communicator = new Communicator(`${options.url}/wallet`);
