@@ -13,6 +13,7 @@ export function openPopup(url: URL): Window {
   );
   popup?.focus();
   if (!popup) {
+    alert("Please enable pop-ups to continue");
     throw new Error("WebApp window failed to open");
   }
 
