@@ -72,6 +72,7 @@ export class HoTProvider
   private readonly communicator: Communicator;
   private accounts: string[] = [];
   private chain: Chain;
+  public readonly isHoT = true;
 
   constructor(options: { url?: string }) {
     super();
@@ -159,9 +160,9 @@ export class HoTProvider
   private async handleRequestAccounts(
     request: RequestArguments
   ): Promise<unknown> {
-    if (this.accounts.length > 0) {
-      return this.accounts;
-    }
+    // if (this.accounts.length > 0) {
+    //   return this.accounts;
+    // }
     const result = (await this.sendRequestToPopup(request)) as {
       accounts: string[];
       availableChainList: Chain[];
