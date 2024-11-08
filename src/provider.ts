@@ -86,8 +86,8 @@ export class HoTProvider
     this.communicator = new Communicator(`${options.url}/wallet`);
     this.accounts = getLocalStorage(getKey("accounts")) ?? [];
     this.chain = getLocalStorage(getKey("activeChainId")) ?? {
-      id: 11155111,
-      rpcUrl: "https://rpc.sepolia.org",
+      id: 42161,
+      rpcUrl: "https://arb1.arbitrum.io/rpc",
     };
   }
 
