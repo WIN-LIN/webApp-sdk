@@ -60,6 +60,7 @@ type Chain = {
 };
 
 export const HoTUrl = [
+  "http://web.token.im/",
   "https://home-of-token-web.vercel.app/", // main
   "https://web.imstaging.works/", // staging
   "https://home-of-token-web-test.vercel.app/", // test
@@ -72,6 +73,7 @@ export class HoTProvider
   private readonly communicator: Communicator;
   private accounts: string[] = [];
   private chain: Chain;
+  public readonly isHoT = true;
 
   constructor(options: { url?: string }) {
     super();
@@ -159,9 +161,9 @@ export class HoTProvider
   private async handleRequestAccounts(
     request: RequestArguments
   ): Promise<unknown> {
-    if (this.accounts.length > 0) {
-      return this.accounts;
-    }
+    // if (this.accounts.length > 0) {
+    //   return this.accounts;
+    // }
     const result = (await this.sendRequestToPopup(request)) as {
       accounts: string[];
       availableChainList: Chain[];
