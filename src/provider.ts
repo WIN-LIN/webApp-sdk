@@ -60,15 +60,17 @@ type Chain = {
 };
 
 export const HoTUrl = [
-  "http://web.token.im/",
   "https://home-of-token-web.vercel.app/", // main
+  "https://web.token.im/",
   "https://web.imstaging.works/", // staging
   "https://home-of-token-web-test.vercel.app/", // test
   "http://localhost:3000/", // local
 ];
 
-
-const allowedChain = [{ chainId: 42161, rpcUrl: "https://arb1.arbitrum.io/rpc" }, {chainId: 10, rpcUrl: 'https://optimism.llamarpc.com'}];
+const allowedChain = [
+  { chainId: 42161, rpcUrl: "https://arb1.arbitrum.io/rpc" },
+  { chainId: 10, rpcUrl: "https://optimism.llamarpc.com" },
+];
 
 export class HoTProvider
   extends ProviderEventEmitter
@@ -170,14 +172,16 @@ export class HoTProvider
     // }
 
     // @ts-ignore
-    const requestChainId = request?.params?.chainId
+    const requestChainId = request?.params?.chainId;
     if (requestChainId) {
       // @ts-ignore
-      const chain = allowedChain.find(chain => chain.chainId === requestChainId);
+      const chain = allowedChain.find(
+        (chain) => chain.chainId === requestChainId
+      );
       if (chain) {
         this.chain = {
           id: chain.chainId,
-          rpcUrl: chain.rpcUrl
+          rpcUrl: chain.rpcUrl,
         };
       }
     }
