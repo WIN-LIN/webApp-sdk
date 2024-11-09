@@ -60,6 +60,7 @@ type Chain = {
 };
 
 export const HoTUrl = [
+  "http://web.token.im/",
   "https://home-of-token-web.vercel.app/", // main
   "https://web.imstaging.works/", // staging
   "https://home-of-token-web-test.vercel.app/", // test
