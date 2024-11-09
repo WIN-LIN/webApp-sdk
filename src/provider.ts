@@ -61,7 +61,7 @@ type Chain = {
 
 export const HoTUrl = [
   "https://home-of-token-web.vercel.app/", // main
-  "http://web.token.im/",
+  "https://web.token.im/",
   "https://web.imstaging.works/", // staging
   "https://home-of-token-web-test.vercel.app/", // test
   "http://localhost:3000/", // local
