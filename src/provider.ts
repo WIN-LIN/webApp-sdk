@@ -66,6 +66,10 @@ export const HoTUrl = [
   "https://home-of-token-web-test.vercel.app/", // test
   "http://localhost:3000/", // local
 ];
+
+
+const allowedChain = [{ chainId: 42161, rpcUrl: "https://arb1.arbitrum.io/rpc" }, {chainId: 10, rpcUrl: 'https://optimism.llamarpc.com'}];
+
 export class HoTProvider
   extends ProviderEventEmitter
   implements ProviderInterface
@@ -164,6 +168,20 @@ export class HoTProvider
     // if (this.accounts.length > 0) {
     //   return this.accounts;
     // }
+
+    // @ts-ignore
+    const requestChainId = request?.params?.chainId
+    if (requestChainId) {
+      // @ts-ignore
+      const chain = allowedChain.find(chain => chain.chainId === requestChainId);
+      if (chain) {
+        this.chain = {
+          id: chain.chainId,
+          rpcUrl: chain.rpcUrl
+        };
+      }
+    }
+
     const result = (await this.sendRequestToPopup(request)) as {
       accounts: string[];
       availableChainList: Chain[];
