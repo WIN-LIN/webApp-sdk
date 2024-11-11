@@ -71,6 +71,7 @@ export const HoTUrl = [
 const allowedChain = [
   { chainId: 42161, rpcUrl: "https://arb1.arbitrum.io/rpc" },
   { chainId: 10, rpcUrl: "https://optimism.llamarpc.com" },
+  { chainId: 11155111, rpcUrl: "https://rpc.sepolia.org" },
 ];
 
 export class HoTProvider
