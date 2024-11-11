@@ -13,7 +13,11 @@ export function openPopup(url: URL): Window {
   );
   popup?.focus();
   if (!popup) {
-    alert("Please enable pop-ups to continue");
+    const userLang = navigator.language;
+    const message = userLang.startsWith('zh') 
+      ? "请前往浏览器设置，将「阻止弹出式弹窗」关闭以继续使用"
+      : "Please go to the browsers setting page to allow pop-ups to continue";
+    alert(message);
     throw new Error("WebApp window failed to open");
   }
 
